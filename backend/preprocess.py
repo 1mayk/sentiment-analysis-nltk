@@ -4,9 +4,10 @@ import re
 from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
 
-nltk.download('stopwords')
+nltk.download("stopwords")
 
 tokenizer = RegexpTokenizer(r"\w+")
+
 
 def preprocess_text(text):
     """
