@@ -69,11 +69,10 @@ export default function App() {
     <Box minHeight="100vh" bgcolor="#fff">
       <Box bgcolor={PRIMARY} color="#fff" p={3} textAlign="center">
         <Typography variant="h4" fontWeight="bold">Labware Sentiment Analyzer</Typography>
-        <Typography>Analise sentimentos em textos e arquivos de clientes de forma rápida e intuitiva.</Typography>
       </Box>
       <Box display="flex" justifyContent="center" mt={4}>
         <Paper sx={{ width: 500, p: 3, borderRadius: 3 }} elevation={4}>
-          <Tabs value={tab} onChange={(_, v) => { setTab(v); setResult(null); }} centered>
+          <Tabs value={tab} onChange={(_, v) => { setTab(v); setResult(null); setFile(null); }} centered>
             <Tab label="Texto" />
             <Tab label="Arquivo (PDF, TXT, DOCX)" />
             <Tab label="Batch (CSV, Excel)" />

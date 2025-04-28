@@ -1,19 +1,21 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import nltk
+from preprocess import preprocess_text
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import pandas as pd
 import os
+from io import BytesIO, StringIO
 from werkzeug.utils import secure_filename
-from io import BytesIO
 import docx
 import PyPDF2
 import requests
+import csv
 
 nltk.download('vader_lexicon')
 
 # Baixar lexicon VADER-PT-BR se não existir
-VADER_PT_URL = 'https://raw.githubusercontent.com/rafjaa/vader-sentiment-ptbr/master/vaderSentiment/vader_lexicon_ptbr.txt'
+VADER_PT_URL = 'https://raw.githubusercontent.com/rafjaa/LeIA/master/lexicons/vader_lexicon_ptbr.txt'
 VADER_PT_PATH = os.path.join(os.path.expanduser('~'), 'nltk_data', 'sentiment', 'vader_lexicon_ptbr.txt')
 os.makedirs(os.path.dirname(VADER_PT_PATH), exist_ok=True)
 
@@ -32,12 +34,15 @@ except Exception as e:
 
 class SentimentIntensityAnalyzerPT(SentimentIntensityAnalyzer):
     def __init__(self):
-        if lexicon_ok and os.path.exists(VADER_PT_PATH):
-            print("Usando léxico PT-BR para análise de sentimento.")
-            super().__init__(lexicon_file=VADER_PT_PATH)
-        else:
-            print("Usando léxico padrão (inglês) para análise de sentimento.")
-            super().__init__()
+        super().__init__()
+        if os.path.exists(VADER_PT_PATH):
+            print("Mesclando léxico PT-BR ao léxico padrão.")
+            with open(VADER_PT_PATH, encoding="utf-8") as f:
+                for line in f:
+                    if not line.strip() or line.startswith('#'):
+                        continue
+                    word, score = line.strip().split('\t')[:2]
+                    self.lexicon[word] = float(score)
 
 sia = SentimentIntensityAnalyzerPT()
 
@@ -50,6 +55,8 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # Utilitário para analisar sentimento
 
 def analyze_text(text):
+    # pré-processamento do texto
+    text = preprocess_text(text)
     scores = sia.polarity_scores(text)
     if scores['compound'] >= 0.05:
         label = 'Positivo'
@@ -95,25 +102,48 @@ def analyze_batch_route():
     ext = os.path.splitext(filename)[1].lower()
     if ext in ['.csv', '.xlsx']:
         if ext == '.csv':
-            df = pd.read_csv(file)
+            # Usa csv.reader para parsing robusto de uma coluna 'texto'
+            raw = file.read().decode('utf-8', errors='ignore')
+            f = StringIO(raw)
+            reader = csv.reader(f, skipinitialspace=True)
+            rows = list(reader)
+            if not rows:
+                return jsonify({'error': 'CSV vazio'}), 400
+            # Remove cabeçalho se for 'texto'
+            if rows[0] and rows[0][0].strip().lower() == 'texto':
+                rows = rows[1:]
+            # Extrai primeira coluna como texto
+            data = [row[0] for row in rows if row]
+            df = pd.DataFrame({'texto': data})
         else:
             df = pd.read_excel(file)
         if 'texto' not in df.columns:
             return jsonify({'error': 'Arquivo deve conter coluna "texto"'}), 400
         df_result = df.copy()
-        df_result['sentimento'] = df['texto'].apply(lambda t: analyze_text(str(t))['label'])
-        df_result['compound'] = df['texto'].apply(lambda t: analyze_text(str(t))['compound'])
-        output = BytesIO()
+        df_result['texto'] = df_result['texto'].astype(str)
+        df_result['sentimento'] = df_result['texto'].apply(lambda t: analyze_text(t)['label'])
+        df_result['compound'] = df_result['texto'].apply(lambda t: analyze_text(t)['compound'])
         if ext == '.csv':
-            df_result.to_csv(output, index=False)
+            output = BytesIO()
+            df_result.to_csv(output, index=False, encoding='utf-8')
             output.seek(0)
-            return send_file(output, mimetype='text/csv', as_attachment=True, download_name='resultado.csv')
+            return send_file(
+                output,
+                mimetype="text/csv",
+                as_attachment=True,
+                download_name="resultado.csv"
+            )
         else:
+            output = BytesIO()
             df_result.to_excel(output, index=False)
             output.seek(0)
-            return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', as_attachment=True, download_name='resultado.xlsx')
-    else:
-        return jsonify({'error': 'Formato não suportado para batch'}), 400
+            return send_file(
+                output,
+                mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                as_attachment=True,
+                download_name="resultado.xlsx"
+            )
+    return jsonify({'error': 'Formato não suportado para batch'}), 400
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
