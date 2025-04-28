@@ -6,7 +6,7 @@
     "start": "electron .",
     "build-backend": "pyinstaller --onefile --name backend --distpath backend/dist ../backend/app.py",
     "build-frontend": "npm --prefix ../frontend run build",
-    "copy-frontend": "rmdir /S /Q dist && xcopy ..\\frontend\\dist dist /E /I /Y",
+    "copy-frontend": "if exist dist rmdir /S /Q dist && xcopy ..\\frontend\\dist dist /E /I /Y",
     "dist": "npm run build-backend && npm run build-frontend && npm run copy-frontend && electron-builder"
   },
   "devDependencies": {
@@ -27,6 +27,7 @@
       "buildResources": "build"
     },
     "win": {
+      "sign": false,
       "target": ["nsis"]
     }
   }
