@@ -24,11 +24,14 @@
       "node_modules/**/*"
     ],
     "directories": {
-      "buildResources": "build"
+      "buildResources": "build",
+      "output": "release"
     },
     "win": {
       "sign": false,
-      "target": ["nsis"]
+      "target": [
+        "nsis"
+      ]
     }
   }
 }
