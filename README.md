@@ -32,6 +32,20 @@ Para a análise em lote, o arquivo deve conter uma coluna obrigatória chamada *
 - Interface responsiva, minimalista, cores da Labware
 - Pronto para virar executável com Electron
 
+## Gerar executável
+1. Gere o build de produção do frontend:
+   ```bash
+   cd frontend
+   npm run build
+   ```
+2. Instale dependências e gere o instalador no Electron:
+   ```bash
+   cd ../electron
+   npm install
+   npm run dist
+   ```
+O instalador será gerado em `electron/dist`, pronto para distribuição.
+
 ---
 Cores principais:
 - Principal: #0D488F

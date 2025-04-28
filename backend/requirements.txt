@@ -7,3 +7,4 @@ PyPDF2
 pdfminer.six
 flask-cors
 requests
+pyinstaller

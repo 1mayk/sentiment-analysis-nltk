@@ -3,9 +3,31 @@
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build-backend": "pyinstaller --onefile --name backend --distpath backend/dist ../backend/app.py",
+    "build-frontend": "npm --prefix ../frontend run build",
+    "copy-frontend": "rmdir /S /Q dist && xcopy ..\\frontend\\dist dist /E /I /Y",
+    "dist": "npm run build-backend && npm run build-frontend && npm run copy-frontend && electron-builder"
   },
   "devDependencies": {
-    "electron": "^28.2.0"
+    "electron": "^28.2.0",
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "com.labware.sentiment",
+    "productName": "Labware Sentiment Analyzer",
+    "files": [
+      "main.js",
+      "package.json",
+      "dist/**/*",
+      "backend/dist/**/*",
+      "node_modules/**/*"
+    ],
+    "directories": {
+      "buildResources": "build"
+    },
+    "win": {
+      "target": ["nsis"]
+    }
   }
 }
