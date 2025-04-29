@@ -1,36 +1,45 @@
 {
   "name": "labware-sentiment-analyzer",
   "version": "1.0.0",
+  "description": "Aplicação desktop para análise de sentimentos com Python (NLTK), React e Electron",
+  "author": "Labware",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "build-backend": "pyinstaller --onefile --name backend --distpath backend/dist ../backend/app.py",
+    "start": "electron-forge start",
+    "build-backend": "pyinstaller --onefile --windowed --name backend --distpath backend/dist ../backend/app.py",
     "build-frontend": "npm --prefix ../frontend run build",
     "copy-frontend": "if exist dist rmdir /S /Q dist && xcopy ..\\frontend\\dist dist /E /I /Y",
-    "dist": "npm run build-backend && npm run build-frontend && npm run copy-frontend && electron-builder"
+    "build": "npm run build-backend && npm run build-frontend && npm run copy-frontend",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "devDependencies": {
     "electron": "^28.2.0",
-    "electron-builder": "^24.0.0"
+    "@electron-forge/cli": "^6.0.0",
+    "@electron-forge/maker-squirrel": "^6.0.0"
   },
-  "build": {
-    "appId": "com.labware.sentiment",
-    "productName": "Labware Sentiment Analyzer",
-    "files": [
-      "main.js",
-      "package.json",
-      "dist/**/*",
-      "backend/dist/**/*",
-      "node_modules/**/*"
-    ],
-    "directories": {
-      "buildResources": "build",
-      "output": "release"
-    },
-    "win": {
-      "sign": false,
-      "target": [
-        "nsis"
+  "config": {
+    "forge": {
+      "packagerConfig": {
+        "appId": "com.labware.sentiment",
+        "productName": "Labware Sentiment Analyzer",
+        "asar": false,
+        "files": [
+          "main.js",
+          "dist/**/*",
+          "backend/dist/backend.exe",
+          "package.json"
+        ]
+      },
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "labware_sentiment_analyzer",
+            "authors": "Labware",
+            "description": "Aplicação desktop para análise de sentimentos com Python (NLTK), React e Electron"
+          }
+        }
       ]
     }
   }

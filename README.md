@@ -33,18 +33,11 @@ Para a análise em lote, o arquivo deve conter uma coluna obrigatória chamada *
 - Pronto para virar executável com Electron
 
 ## Gerar executável
-1. Gere o build de produção do frontend:
-   ```bash
-   cd frontend
-   npm run build
-   ```
-2. Instale dependências e gere o instalador no Electron:
-   ```bash
-   cd ../electron
-   npm install
-   npm run dist
-   ```
-O instalador será gerado em `electron/dist`, pronto para distribuição.
+1. `cd electron`
+2. `npm install`
+3. `npm run build`
+4. `npm run make`
+O instalador será gerado em `out/make`, pronto para distribuição.
 
 ---
 Cores principais:
