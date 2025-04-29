@@ -21,6 +21,7 @@
   "config": {
     "forge": {
       "packagerConfig": {
+        "icon": "./assets/icon",
         "appId": "com.labware.sentiment",
         "productName": "Labware Sentiment Analyzer",
         "asar": false,
@@ -37,7 +38,8 @@
           "config": {
             "name": "labware_sentiment_analyzer",
             "authors": "Labware",
-            "description": "Aplicação desktop para análise de sentimentos com Python (NLTK), React e Electron"
+            "description": "Aplicação desktop para análise de sentimentos com Python (NLTK), React e Electron",
+            "setupIcon": "./assets/icon.ico"
           }
         }
       ]
