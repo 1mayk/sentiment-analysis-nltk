@@ -29,8 +29,6 @@ Para a análise em lote, o arquivo deve conter uma coluna obrigatória chamada *
 - Upload de PDF, TXT, DOCX
 - Processamento em lote: CSV, Excel
 - Download automático dos resultados batch
-- Interface responsiva, minimalista, cores da Labware
-- Pronto para virar executável com Electron
 
 ## Gerar executável
 1. `cd electron`
@@ -38,6 +36,14 @@ Para a análise em lote, o arquivo deve conter uma coluna obrigatória chamada *
 3. `npm run build`
 4. `npm run make`
 O instalador será gerado em `out/make`, pronto para distribuição.
+
+### Local do Arquivo Instalado
+
+    C:\Users\<nome_do_usuario>\AppData\Local\Programs\
+
+### Local dos Downloads dos Lexicons
+
+    C:\Users\<nome_do_usuario>\AppData\Roaming\
 
 ---
 Cores principais:
