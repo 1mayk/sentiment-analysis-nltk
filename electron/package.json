@@ -11,38 +11,20 @@
     "copy-frontend": "if exist dist rmdir /S /Q dist && xcopy ..\\frontend\\dist dist /E /I /Y",
     "build": "npm run build-backend && npm run build-frontend && npm run copy-frontend",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "npm run build && electron-forge make"
   },
   "devDependencies": {
-    "electron": "^28.2.0",
-    "@electron-forge/cli": "^6.0.0",
-    "@electron-forge/maker-squirrel": "^6.0.0"
+    "@electron-forge/cli": "^6.4.2",
+    "@electron-forge/maker-deb": "^6.4.2",
+    "@electron-forge/maker-rpm": "^6.4.2",
+    "@electron-forge/maker-zip": "^6.4.2",
+    "@electron-forge/plugin-auto-unpack-natives": "^6.4.2",
+    "@electron-forge/plugin-fuses": "^7.8.0",
+    "@electron/fuses": "^1.8.0",
+    "@felixrieseberg/electron-forge-maker-nsis": "^7.2.0",
+    "electron": "^28.3.3"
   },
-  "config": {
-    "forge": {
-      "packagerConfig": {
-        "icon": "./assets/icon",
-        "appId": "com.labware.sentiment",
-        "productName": "Labware Sentiment Analyzer",
-        "asar": false,
-        "files": [
-          "main.js",
-          "dist/**/*",
-          "backend/dist/backend.exe",
-          "package.json"
-        ]
-      },
-      "makers": [
-        {
-          "name": "@electron-forge/maker-squirrel",
-          "config": {
-            "name": "labware_sentiment_analyzer",
-            "authors": "Labware",
-            "description": "Aplicação desktop para análise de sentimentos com Python (NLTK), React e Electron",
-            "setupIcon": "./assets/icon.ico"
-          }
-        }
-      ]
-    }
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.1"
   }
 }

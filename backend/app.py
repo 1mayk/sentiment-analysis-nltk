@@ -4,22 +4,24 @@ import os
 import docx
 import PyPDF2
 import requests
-import csv
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from preprocess import preprocess_text
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-from io import BytesIO, StringIO
+from io import BytesIO
 from werkzeug.utils import secure_filename
 
 nltk.download("vader_lexicon")
 
-# Baixar lexicon VADER-PT-BR se não existir
+# ... download vader lexicon PT-BR
 VADER_PT_URL = "https://raw.githubusercontent.com/rafjaa/LeIA/master/lexicons/vader_lexicon_ptbr.txt"
 VADER_PT_PATH = os.path.join(
     os.path.expanduser("~"), "nltk_data", "sentiment", "vader_lexicon_ptbr.txt"
 )
+
+# ... create directory for vader lexicon PT-BR
 os.makedirs(os.path.dirname(VADER_PT_PATH), exist_ok=True)
+
 
 lexicon_ok = False
 try:
@@ -39,7 +41,6 @@ class SentimentIntensityAnalyzerPT(SentimentIntensityAnalyzer):
     def __init__(self):
         super().__init__()
         if os.path.exists(VADER_PT_PATH):
-            print("Mesclando léxico PT-BR ao léxico padrão.")
             with open(VADER_PT_PATH, encoding="utf-8") as f:
                 for line in f:
                     if not line.strip() or line.startswith("#"):
@@ -56,9 +57,8 @@ CORS(app)
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+
 # Utilitário para analisar sentimento
-
-
 def analyze_text(text):
     # pré-processamento do texto
     text = preprocess_text(text)
@@ -72,7 +72,44 @@ def analyze_text(text):
     return {**scores, "label": label}
 
 
-# Rota para texto direto
+def get_extension(filename):
+    return os.path.splitext(secure_filename(filename))[1].lower()
+
+
+def extract_text(file):
+    ext = get_extension(file.filename)
+    loaders = {
+        '.txt': lambda f: f.read().decode('utf-8'),
+        '.docx': lambda f: '\n'.join(p.text for p in docx.Document(f).paragraphs),
+        '.pdf': lambda f: '\n'.join(page.extract_text() or '' for page in PyPDF2.PdfReader(f).pages)
+    }
+    if ext in loaders:
+        return loaders[ext](file)
+    raise ValueError("Formato não suportado")
+
+
+def read_dataframe(file):
+    ext = get_extension(file.filename)
+    if ext == '.csv':
+        return pd.read_csv(file, encoding='utf-8', dtype=str, usecols=['texto'])
+    elif ext == '.xlsx':
+        return pd.read_excel(file, usecols=['texto'], dtype=str)
+    raise ValueError("Formato não suportado para batch")
+
+
+def send_dataframe(df, ext):
+    output = BytesIO()
+    if ext == '.csv':
+        df.to_csv(output, index=False, encoding='utf-8')
+        mimetype = 'text/csv'; name = 'resultado.csv'
+    else:
+        df.to_excel(output, index=False)
+        mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; name = 'resultado.xlsx'
+    output.seek(0)
+    return send_file(output, mimetype=mimetype, as_attachment=True, download_name=name)
+
+
+# ... plain text
 @app.route("/analyze/text", methods=["POST"])
 def analyze_text_route():
     data = request.json
@@ -81,82 +118,31 @@ def analyze_text_route():
     return jsonify(result)
 
 
-# Rota para upload de arquivo
+# ... upload file
 @app.route("/analyze/file", methods=["POST"])
 def analyze_file_route():
     file = request.files["file"]
-    filename = secure_filename(file.filename)
-    ext = os.path.splitext(filename)[1].lower()
-    content = ""
-    if ext == ".txt":
-        content = file.read().decode("utf-8")
-    elif ext == ".docx":
-        doc = docx.Document(file)
-        content = "\n".join([p.text for p in doc.paragraphs])
-    elif ext == ".pdf":
-        reader = PyPDF2.PdfReader(file)
-        content = "\n".join([page.extract_text() or "" for page in reader.pages])
-    else:
-        return jsonify({"error": "Formato não suportado"}), 400
-    result = analyze_text(content)
-    return jsonify(result)
+    try:
+        content = extract_text(file)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify(analyze_text(content))
 
 
-# Rota para análise batch (CSV/Excel)
+# ... batch analysis (CSV/Excel)
 @app.route("/analyze/batch", methods=["POST"])
 def analyze_batch_route():
     file = request.files["file"]
-    filename = secure_filename(file.filename)
-    ext = os.path.splitext(filename)[1].lower()
-    if ext in [".csv", ".xlsx"]:
-        if ext == ".csv":
-            # Usa csv.reader para parsing robusto de uma coluna 'texto'
-            raw = file.read().decode("utf-8", errors="ignore")
-            f = StringIO(raw)
-            reader = csv.reader(f, skipinitialspace=True)
-            rows = list(reader)
-            if not rows:
-                return jsonify({"error": "CSV vazio"}), 400
-            # Remove cabeçalho se for 'texto'
-            if rows[0] and rows[0][0].strip().lower() == "texto":
-                rows = rows[1:]
-            # Extrai primeira coluna como texto
-            data = [row[0] for row in rows if row]
-            df = pd.DataFrame({"texto": data})
-        else:
-            df = pd.read_excel(file)
-        if "texto" not in df.columns:
-            return jsonify({"error": 'Arquivo deve conter coluna "texto"'}), 400
-        df_result = df.copy()
-        df_result["texto"] = df_result["texto"].astype(str)
-        df_result["sentimento"] = df_result["texto"].apply(
-            lambda t: analyze_text(t)["label"]
-        )
-        df_result["compound"] = df_result["texto"].apply(
-            lambda t: analyze_text(t)["compound"]
-        )
-        if ext == ".csv":
-            output = BytesIO()
-            df_result.to_csv(output, index=False, encoding="utf-8")
-            output.seek(0)
-            return send_file(
-                output,
-                mimetype="text/csv",
-                as_attachment=True,
-                download_name="resultado.csv",
-            )
-        else:
-            output = BytesIO()
-            df_result.to_excel(output, index=False)
-            output.seek(0)
-            return send_file(
-                output,
-                mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                as_attachment=True,
-                download_name="resultado.xlsx",
-            )
-    return jsonify({"error": "Formato não suportado para batch"}), 400
-
+    try:
+        df = read_dataframe(file)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    df_result = df.copy()
+    results = df_result["texto"].apply(lambda t: analyze_text(t))
+    df_result["sentimento"] = results.apply(lambda r: r["label"])
+    df_result["compound"] = results.apply(lambda r: r["compound"])
+    ext = get_extension(file.filename)
+    return send_dataframe(df_result, ext)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
