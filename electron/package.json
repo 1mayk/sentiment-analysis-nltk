@@ -16,13 +16,13 @@
   "devDependencies": {
     "electron": "^28.2.0",
     "@electron-forge/cli": "^6.0.0",
-    "@electron-forge/maker-squirrel": "^6.0.0"
+    "@felixrieseberg/electron-forge-maker-nsis": "^7.2.0"
   },
   "config": {
     "forge": {
       "packagerConfig": {
-        "icon": "./assets/icon",
-        "appId": "com.labware.sentiment",
+        "icon": "icon.png",
+        "appId": "labware.sentiment.analyzer",
         "productName": "Labware Sentiment Analyzer",
         "asar": false,
         "files": [
@@ -32,14 +32,29 @@
           "package.json"
         ]
       },
+      "win": {
+        "target": [
+          "nsis"
+        ],
+        "icon": "icon.ico"
+      },
+      "nsis": {
+        "oneClick": false,
+        "perMachine": false,
+        "allowToChangeInstallationDirectory": true,
+        "shortcutName": "labware-sentiment-analyzer",
+        "installerIcon": "icon.ico",
+        "uninstallerIcon": "icon.ico"
+      },
       "makers": [
         {
-          "name": "@electron-forge/maker-squirrel",
+          "name": "@felixrieseberg/electron-forge-maker-nsis",
           "config": {
-            "name": "labware_sentiment_analyzer",
-            "authors": "Labware",
-            "description": "Aplicação desktop para análise de sentimentos com Python (NLTK), React e Electron",
-            "setupIcon": "./assets/icon.ico"
+            "oneClick": true,
+            "perMachine": false,
+            "allowToChangeInstallationDirectory": false,
+            "name": "labware-sentiment-analyzer",
+            "icon": "icon.ico"
           }
         }
       ]

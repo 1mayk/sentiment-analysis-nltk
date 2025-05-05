@@ -12,6 +12,8 @@ function startBackend() {
 
   if (fs.existsSync(exePath)) {
     backendProcess = spawn(exePath, [], { stdio: "ignore", detached: true });
+    backendProcess.on("error", (err) => console.error("Backend error:", err));
+    backendProcess.unref();
     console.log("Backend iniciado:", exePath);
   } else {
     console.error("Não encontrei o backend:", exePath);
@@ -30,19 +32,18 @@ function createWindow() {
     width: 1200,
     height: 800,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      webSecurity: false,
+      nodeIntegration: false,
+      contextIsolation: true,
     },
     icon: path.join(__dirname, "icon.png"),
     backgroundColor: "#0D488F",
     show: false,
   });
 
-  const indexPath = path.join(__dirname, "dist", "index.html");
+  const indexPath = path.join(app.getAppPath(), "dist", "index.html");
 
   if (app.isPackaged) {
-    // Modo produção: carrega o arquivo index.html do diretório dist
+    // Modo produção: carrega o arquivo index.html do diretório dist dentro de resources
     win
       .loadFile(indexPath)
       .then(() => console.log("loadFile succeeded"))
@@ -55,8 +56,9 @@ function createWindow() {
       .catch((err) => console.error("loadURL failed:", err));
   }
 
-  // Mostrar janela quando estiver pronta
-  win.once('ready-to-show', () => {
+  // Maximizar e mostrar somente quando pronto para evitar flicker
+  win.once("ready-to-show", () => {
+    win.maximize();
     win.show();
   });
 }
