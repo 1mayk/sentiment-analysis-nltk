@@ -28,7 +28,7 @@
       "dist/**/*",
       "package.json"
     ],
-    "extraFiles": [
+    "extraResources": [
       {
         "from": "backend/dist/",
         "to": "backend"
