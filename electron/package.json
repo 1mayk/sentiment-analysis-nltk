@@ -6,7 +6,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron-forge start",
-    "build-backend": "pyinstaller --onefile --windowed --name backend --distpath backend/dist ../backend/app.py",
+    "build-backend": "pyinstaller --onefile --name backend --distpath backend/dist ../backend/app.py",
     "build-frontend": "npm --prefix ../frontend run build",
     "copy-frontend": "if exist dist rmdir /S /Q dist && xcopy ..\\frontend\\dist dist /E /I /Y",
     "build": "npm run build-backend && npm run build-frontend && npm run copy-frontend",
@@ -15,8 +15,6 @@
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.4.2",
-    "@electron-forge/maker-deb": "^6.4.2",
-    "@electron-forge/maker-rpm": "^6.4.2",
     "@electron-forge/maker-zip": "^6.4.2",
     "@electron-forge/plugin-auto-unpack-natives": "^6.4.2",
     "@electron-forge/plugin-fuses": "^7.8.0",

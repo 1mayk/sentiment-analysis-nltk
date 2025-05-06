@@ -5,13 +5,12 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 module.exports = {
   packagerConfig: {
     icon: "assets/icon",
-    asar: {
-      unpack: "backend/dist/backend.exe"
-    },
+    asar: true,
     extraResources: [
       {
-        from: path.resolve(__dirname, "backend/dist/backend.exe"),
-        to: "backend/dist/backend.exe"
+        from: path.resolve(__dirname, "backend", "dist"),
+        to: "backend",
+        filter: ["**/*"]
       }
     ],
     files: [
@@ -34,19 +33,7 @@ module.exports = {
         installerIcon: "assets/icon.ico",
         uninstallerIcon: "assets/icon.ico",
       },
-    },
-    {
-      name: "@electron-forge/maker-zip",
-      platforms: ["darwin"],
-    },
-    {
-      name: "@electron-forge/maker-deb",
-      config: {},
-    },
-    {
-      name: "@electron-forge/maker-rpm",
-      config: {},
-    },
+    }
   ],
   plugins: [
     {
