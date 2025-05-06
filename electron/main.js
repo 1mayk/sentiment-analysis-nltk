@@ -7,18 +7,64 @@ const net = require("net");
 let backendProcess = null;
 
 function startBackend() {
-  const exePath = app.isPackaged
-    ? path.join(app.getAppPath(), "backend", "dist", "backend.exe")
-    : path.join(__dirname, "backend", "dist", "backend.exe");
-
-
-  if (fs.existsSync(exePath)) {
-    backendProcess = spawn(exePath, [], { stdio: "pipe", detached: true });
+  if (!app.isPackaged) {
+    const scriptPath = path.join(__dirname, "..", "backend", "app.py");
+    backendProcess = spawn("python", [scriptPath], { stdio: "inherit" });
     backendProcess.on("error", (err) => console.error("Backend error:", err));
-    backendProcess.unref();
-    console.log("Backend iniciado:", exePath);
+    console.log("Backend dev iniciado:", scriptPath);
   } else {
-    console.error("Não encontrei o backend:", exePath);
+    const exePath = path.join(
+      process.resourcesPath,
+      "backend",
+      "dist",
+      "backend.exe"
+    );
+    const asarUnpackedPath = path.join(
+      process.resourcesPath,
+      "app.asar.unpacked",
+      "backend",
+      "dist",
+      "backend.exe"
+    );
+    const directBackendPath = path.join(
+      process.resourcesPath,
+      "backend",
+      "backend.exe"
+    );
+
+    let executablePath = null;
+    if (fs.existsSync(exePath)) {
+      executablePath = exePath;
+    } else if (fs.existsSync(directBackendPath)) {
+      executablePath = directBackendPath;
+    } else if (fs.existsSync(asarUnpackedPath)) {
+      executablePath = asarUnpackedPath;
+    } else {
+      console.error(
+        "Não encontrei o backend em nenhum dos paths:", 
+        { exePath, directBackendPath, asarUnpackedPath }
+      );
+    }
+    if (executablePath) {
+      try {
+        backendProcess = spawn(executablePath, [], {
+          stdio: "inherit",
+          cwd: path.dirname(executablePath),
+        });
+
+        backendProcess.on("error", (err) => {
+          console.error("Erro ao iniciar o backend:", err);
+        });
+
+        backendProcess.on("exit", (code) => {
+          console.log(`Backend encerrado com código: ${code}`);
+        });
+
+        console.log("Backend prod iniciado:", executablePath);
+      } catch (error) {
+        console.error("Exceção ao iniciar o backend:", error);
+      }
+    }
   }
 }
 
@@ -33,9 +79,18 @@ function waitForPort(port, host = "127.0.0.1", cb) {
   const socket = new net.Socket();
   socket.setTimeout(2000);
   socket
-    .once("connect", () => { socket.destroy(); cb(); })
-    .once("error", () => { socket.destroy(); setTimeout(() => waitForPort(port, host, cb), 500); })
-    .once("timeout", () => { socket.destroy(); setTimeout(() => waitForPort(port, host, cb), 500); })
+    .once("connect", () => {
+      socket.destroy();
+      cb();
+    })
+    .once("error", () => {
+      socket.destroy();
+      setTimeout(() => waitForPort(port, host, cb), 500);
+    })
+    .once("timeout", () => {
+      socket.destroy();
+      setTimeout(() => waitForPort(port, host, cb), 500);
+    })
     .connect(port, host);
 }
 
