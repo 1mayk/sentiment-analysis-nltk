@@ -23,7 +23,8 @@ def preprocess_text(text):
     text = text.lower()
 
     # Remove URLs
-    text = re.sub(r"http\\S+", "", text)
+    # text = re.sub(r"http\\S+", "", text)
+    text = re.sub(r"https?://\S+", "", text)
 
     # Remove pontuações
     text = text.translate(str.maketrans("", "", string.punctuation))
@@ -32,7 +33,9 @@ def preprocess_text(text):
     tokens = tokenizer.tokenize(text)
 
     # Remove stopwords
-    stop_words = set(stopwords.words("portuguese"))
+    stop_words = set(stopwords.words("portuguese")) - {
+        "não", "nem", "jamais", "tampouco", "muito", "bastante", "mais", "menos", "mas", "porém"
+    }
     tokens = [word for word in tokens if word not in stop_words]
 
     # Junta de volta em string

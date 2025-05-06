@@ -1,45 +1,69 @@
 # Labware Sentiment Analyzer
 
-Projeto de análise de sentimentos com backend em Python (NLTK + VADER), frontend (Vite + React), pronto para Electron.
+Projeto de análise de sentimentos com backend em Python (NLTK + VADER), frontend em React (Vite + MUI) e desktop com Electron.
+
+## Funcionalidades
+
+- Análise de texto a partir de input manual.
+- Upload e análise de arquivos (.txt, .pdf, .docx).
+- Análise em lote de arquivos CSV e Excel (coluna `texto`).
+- Download automático dos resultados batch (CSV/Excel).
+- Registro em banco local (`sentiment_db.xlsx` em ~/Downloads) com colunas: ID, Empresa, Contato, Texto, Percepção, Score.
+- Aplicativo desktop para Windows com instalador NSIS via Electron Builder.
 
 ## Como rodar
 
-### Backend
-1. `cd backend`
-2. `pip install -r requirements.txt`
-3. `python app.py`
+### Backend (Desenvolvimento)
+```bash
+cd backend
+pip install -r requirements.txt
+python app.py
+```
+
+### Backend (Produção)
+```bash
+cd electron
+npm install
+npm run build-backend
+# Executável gerado em electron/backend/dist/backend(.exe)
+```
 
 ### Frontend
-1. `cd frontend`
-2. `npm install`
-3. `npm run dev`
+- Desenvolvimento:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+- Produção:
+```bash
+cd frontend
+npm install
+npm run build
+npm run preview
+```
 
 ### Electron
-1. `cd electron`
-2. `npm install`
-3. `npm start` (após backend e frontend estarem rodando)
+- Desenvolvimento:
+```bash
+cd electron
+npm install
+npm run start
+```
+- Produção e instalador:
+```bash
+cd electron
+npm install
+npm run build      # compila backend, frontend e copia frontend
+npm run dist       # gera instalador em 'release'
+```
 
-## Formato de arquivo batch (CSV/Excel)
-Para a análise em lote, o arquivo deve conter uma coluna obrigatória chamada **texto**, com os conteúdos a serem analisados. O backend processa essa coluna e retorna um arquivo com as colunas originais mais duas colunas:
-- **sentimento**: rótulo do sentimento (Positivo, Neutro, Negativo)
-- **compound**: pontuação numérica de -1 a 1
+## Batch CSV/Excel
 
-## Funcionalidades
-- Input de texto
-- Upload de PDF, TXT, DOCX
-- Processamento em lote: CSV, Excel
-- Download automático dos resultados batch
-- Interface responsiva, minimalista, cores da Labware
-- Pronto para virar executável com Electron
-
-## Gerar executável
-1. `cd electron`
-2. `npm install`
-3. `npm run build`
-4. `npm run make`
-O instalador será gerado em `out/make`, pronto para distribuição.
+Arquivo deve conter coluna `texto`; retorna as colunas originais + `sentimento` e `compound`.
 
 ---
+
 Cores principais:
 - Principal: #0D488F
 - Secundária: #8EC74F
