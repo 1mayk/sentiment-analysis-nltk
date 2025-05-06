@@ -72,7 +72,7 @@ def append_records(records):
         df_new = pd.DataFrame(records)
         df_new["ID"] = range(1, len(df_new)+1)
         df_all = df_new
-    cols = ["ID", "Empresa", "Contato", "Texto", "Percepção", "Score"]
+    cols = ["ID", "Empresa", "Contato", "Texto", "Percepção", "Sentimento", "Score"]
     df_all = df_all[cols]
     df_all.to_excel(DB_FILE, index=False, engine="openpyxl")
 
@@ -91,7 +91,7 @@ def analyze_text(text, company=None, contact=None, perception=None):
     # registra em DB se parâmetros informados
     if company is not None and contact is not None and perception is not None:
         append_records([
-            {"Empresa": company, "Contato": contact, "Texto": text, "Percepção": perception, "Score": result["compound"]}
+            {"Empresa": company, "Contato": contact, "Texto": text, "Percepção": perception, "Sentimento": result["label"], "Score": result["compound"]}
         ])
     return result
 
