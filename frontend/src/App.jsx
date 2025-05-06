@@ -52,12 +52,45 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [snack, setSnack] = useState({ open: false, msg: "", type: "error" });
+  const [contact, setContact] = useState("");
+  const [company, setCompany] = useState("");
+  const [perception, setPerception] = useState("");
+  const [errors, setErrors] = useState({ contact: false, company: false, perception: false });
+
+  const handlePerceptionChange = (e) => {
+    const val = e.target.value;
+    // permitir vazio ou sinal negativo
+    if (val === "" || val === "-") {
+      setPerception(val);
+      return;
+    }
+    // só números com até 2 decimais
+    if (!/^-?\d+(?:\.\d{0,2})?$/.test(val)) return;
+    const num = parseFloat(val);
+    if (num < -1 || num > 1) return;
+    setPerception(val);
+  };
+
+  const validateFields = () => {
+    let valid = true;
+    const newErrors = { contact: false, company: false, perception: false };
+    if (!contact.trim()) { newErrors.contact = true; valid = false; }
+    if (!company.trim()) { newErrors.company = true; valid = false; }
+    const num = parseFloat(perception);
+    if (perception.trim() === "" || isNaN(num) || num < -1 || num > 1) { newErrors.perception = true; valid = false; }
+    setErrors(newErrors);
+    return valid;
+  };
 
   const handleTextAnalyze = async () => {
+    if (!validateFields()) {
+      setSnack({ open: true, msg: "Preencha todos os campos corretamente", type: "error" });
+      return;
+    }
     setLoading(true);
     setResult(null);
     try {
-      const res = await axios.post("/analyze/text", { text });
+      const res = await axios.post("/analyze/text", { text, contact, company, perception: parseFloat(perception) });
       setResult(res.data);
     } catch (e) {
       setSnack({ open: true, msg: "Erro ao analisar texto", type: "error" });
@@ -66,11 +99,18 @@ export default function App() {
   };
 
   const handleFileAnalyze = async (batch = false) => {
+    if (!validateFields()) {
+      setSnack({ open: true, msg: "Preencha todos os campos corretamente", type: "error" });
+      return;
+    }
     if (!file) return;
     setLoading(true);
     setResult(null);
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("contact", contact);
+    formData.append("company", company);
+    formData.append("perception", perception);
     try {
       if (batch) {
         const res = await axios.post("/analyze/batch", formData, {
@@ -124,6 +164,37 @@ export default function App() {
             <Tab label="Arquivo (PDF, TXT, DOCX)" />
             <Tab label="Batch (CSV, Excel)" />
           </Tabs>
+          <Box mt={2}>
+            <TextField
+              label="Contato"
+              fullWidth
+              required
+              value={contact}
+              onChange={(e) => setContact(e.target.value)}
+              error={errors.contact}
+              helperText={errors.contact && "Contato é obrigatório"}
+            />
+            <TextField
+              label="Empresa"
+              fullWidth
+              required
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              error={errors.company}
+              helperText={errors.company && "Empresa é obrigatória"}
+              sx={{ mt: 2 }}
+            />
+            <TextField
+              label="Percepção"
+              fullWidth
+              required
+              value={perception}
+              onChange={handlePerceptionChange}
+              error={errors.perception}
+              helperText={errors.perception && "Percepção inválida (-1 a 1, até 2 casas decimais)"}
+              sx={{ mt: 2 }}
+            />
+          </Box>
           {tab === 0 && (
             <Box mt={2}>
               <TextField
