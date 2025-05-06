@@ -5,10 +5,11 @@ const { spawn } = require("child_process");
 
 let backendProcess = null;
 
-function startBackend() {
+function startBackend() {  
+  const exeName = process.platform === 'win32' ? 'backend.exe' : 'backend';
   const exePath = app.isPackaged
-    ? path.join(app.getAppPath(), "backend", "dist", "backend.exe")
-    : path.join(__dirname, "backend", "dist", "backend.exe");
+    ? path.join(process.resourcesPath, 'backend', exeName)
+    : path.join(__dirname, 'backend', 'dist', exeName);
 
   if (fs.existsSync(exePath)) {
     backendProcess = spawn(exePath, [], { stdio: "ignore", detached: true });

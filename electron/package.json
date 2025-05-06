@@ -26,11 +26,18 @@
     "files": [
       "main.js",
       "dist/**/*",
-      "backend/dist/backend.exe",
       "package.json"
     ],
+    "extraFiles": [
+      {
+        "from": "backend/dist/",
+        "to": "backend"
+      }
+    ],
     "win": {
-      "target": ["nsis"],
+      "target": [
+        "nsis"
+      ],
       "icon": "assets/icon.ico"
     },
     "nsis": {
