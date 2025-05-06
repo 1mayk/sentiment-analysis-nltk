@@ -5,44 +5,43 @@
   "author": "Labware",
   "main": "main.js",
   "scripts": {
-    "start": "electron-forge start",
+    "start": "electron .",
     "build-backend": "pyinstaller --onefile --windowed --name backend --distpath backend/dist ../backend/app.py",
     "build-frontend": "npm --prefix ../frontend run build",
     "copy-frontend": "if exist dist rmdir /S /Q dist && xcopy ..\\frontend\\dist dist /E /I /Y",
     "build": "npm run build-backend && npm run build-frontend && npm run copy-frontend",
-    "package": "electron-forge package",
-    "make": "npm run build && electron-forge make"
+    "dist": "npm run build && electron-builder"
   },
   "devDependencies": {
     "electron": "^28.2.0",
-    "@electron-forge/cli": "^6.0.0",
-    "@electron-forge/maker-squirrel": "^6.0.0"
+    "electron-builder": "^23.6.0"
   },
-  "config": {
-    "forge": {
-      "packagerConfig": {
-        "icon": "./assets/icon",
-        "appId": "com.labware.sentiment",
-        "productName": "Labware Sentiment Analyzer",
-        "asar": false,
-        "files": [
-          "main.js",
-          "dist/**/*",
-          "backend/dist/backend.exe",
-          "package.json"
-        ]
-      },
-      "makers": [
-        {
-          "name": "@electron-forge/maker-squirrel",
-          "config": {
-            "name": "labware_sentiment_analyzer",
-            "authors": "Labware",
-            "description": "Aplicação desktop para análise de sentimentos com Python (NLTK), React e Electron",
-            "setupIcon": "./assets/icon.ico"
-          }
-        }
-      ]
+  "build": {
+    "appId": "com.labware.sentiment",
+    "productName": "Labware Sentiment Analyzer",
+    "directories": {
+      "output": "release",
+      "buildResources": "assets"
+    },
+    "files": [
+      "main.js",
+      "dist/**/*",
+      "backend/dist/backend.exe",
+      "package.json"
+    ],
+    "win": {
+      "target": ["nsis"],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Labware Sentiment Analyzer"
     }
   }
 }
