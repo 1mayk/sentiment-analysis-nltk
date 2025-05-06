@@ -57,9 +57,27 @@ CORS(app)
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+DOWNLOADS_FOLDER = os.path.join(os.path.expanduser("~"), "Downloads")
+DB_FILE = os.path.join(DOWNLOADS_FOLDER, "sentiment_db.xlsx")
+
+def append_records(records):
+    os.makedirs(DOWNLOADS_FOLDER, exist_ok=True)
+    if os.path.exists(DB_FILE):
+        df_old = pd.read_excel(DB_FILE, engine="openpyxl")
+        max_id = int(df_old["ID"].max()) if not df_old.empty else 0
+        df_new = pd.DataFrame(records)
+        df_new["ID"] = range(max_id+1, max_id+1+len(df_new))
+        df_all = pd.concat([df_old, df_new], ignore_index=True)
+    else:
+        df_new = pd.DataFrame(records)
+        df_new["ID"] = range(1, len(df_new)+1)
+        df_all = df_new
+    cols = ["ID", "Empresa", "Contato", "Texto", "Percepção", "Score"]
+    df_all = df_all[cols]
+    df_all.to_excel(DB_FILE, index=False, engine="openpyxl")
 
 # Utilitário para analisar sentimento
-def analyze_text(text):
+def analyze_text(text, company=None, contact=None, perception=None):
     # pré-processamento do texto
     text = preprocess_text(text)
     scores = sia.polarity_scores(text)
@@ -69,12 +87,16 @@ def analyze_text(text):
         label = "Negativo"
     else:
         label = "Neutro"
-    return {**scores, "label": label}
-
+    result = {**scores, "label": label}
+    # registra em DB se parâmetros informados
+    if company is not None and contact is not None and perception is not None:
+        append_records([
+            {"Empresa": company, "Contato": contact, "Texto": text, "Percepção": perception, "Score": result["compound"]}
+        ])
+    return result
 
 def get_extension(filename):
     return os.path.splitext(secure_filename(filename))[1].lower()
-
 
 def extract_text(file):
     ext = get_extension(file.filename)
@@ -87,7 +109,6 @@ def extract_text(file):
         return loaders[ext](file)
     raise ValueError("Formato não suportado")
 
-
 def read_dataframe(file):
     ext = get_extension(file.filename)
     if ext == '.csv':
@@ -95,7 +116,6 @@ def read_dataframe(file):
     elif ext == '.xlsx':
         return pd.read_excel(file, usecols=['texto'], dtype=str)
     raise ValueError("Formato não suportado para batch")
-
 
 def send_dataframe(df, ext):
     output = BytesIO()
@@ -108,37 +128,44 @@ def send_dataframe(df, ext):
     output.seek(0)
     return send_file(output, mimetype=mimetype, as_attachment=True, download_name=name)
 
-
 # ... plain text
 @app.route("/analyze/text", methods=["POST"])
 def analyze_text_route():
     data = request.json
     text = data.get("text", "")
-    result = analyze_text(text)
+    contact = data.get("contact", "")
+    company = data.get("company", "")
+    perception = data.get("perception", 0)
+    result = analyze_text(text, company, contact, perception)
     return jsonify(result)
-
 
 # ... upload file
 @app.route("/analyze/file", methods=["POST"])
 def analyze_file_route():
     file = request.files["file"]
+    contact = request.form.get("contact", "")
+    company = request.form.get("company", "")
+    perception = request.form.get("perception", 0)
     try:
         content = extract_text(file)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
-    return jsonify(analyze_text(content))
-
+    result = analyze_text(content, company, contact, perception)
+    return jsonify(result)
 
 # ... batch analysis (CSV/Excel)
 @app.route("/analyze/batch", methods=["POST"])
 def analyze_batch_route():
     file = request.files["file"]
+    contact = request.form.get("contact", "")
+    company = request.form.get("company", "")
+    perception = request.form.get("perception", 0)
     try:
         df = read_dataframe(file)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     df_result = df.copy()
-    results = df_result["texto"].apply(lambda t: analyze_text(t))
+    results = df_result["texto"].apply(lambda t: analyze_text(t, company, contact, perception))
     df_result["sentimento"] = results.apply(lambda r: r["label"])
     df_result["compound"] = results.apply(lambda r: r["compound"])
     ext = get_extension(file.filename)

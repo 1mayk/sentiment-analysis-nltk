@@ -14,8 +14,9 @@ import {
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import axios from "axios";
 
-axios.defaults.baseURL =
-  process.env.NODE_ENV === "production" ? "http://localhost:5000" : "";
+// axios.defaults.baseURL =
+//   process.env.NODE_ENV === "production" ? "http://localhost:5000" : "";
+axios.defaults.baseURL = "http://localhost:5000";
 
 const PRIMARY = "#0D488F";
 const SECONDARY = "#8EC74F";
