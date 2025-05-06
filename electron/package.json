@@ -11,7 +11,7 @@
     "copy-frontend": "if exist dist rmdir /S /Q dist && xcopy ..\\frontend\\dist dist /E /I /Y",
     "build": "npm run build-backend && npm run build-frontend && npm run copy-frontend",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "npm run build && electron-forge make"
   },
   "devDependencies": {
     "electron": "^28.2.0",
