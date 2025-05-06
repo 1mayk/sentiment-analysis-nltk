@@ -57,6 +57,7 @@ function createWindow() {
 
   // Mostrar janela quando estiver pronta
   win.once('ready-to-show', () => {
+    win.maximize();
     win.show();
   });
 }
