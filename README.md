@@ -1,4 +1,4 @@
-# Labware Sentiment Analyzer
+# Sentiment Analyzer
 
 Projeto de análise de sentimentos com backend em Python (NLTK + VADER), frontend em React (Vite + MUI) e desktop com Electron.
 
